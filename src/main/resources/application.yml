@@ -8,6 +8,7 @@ server:
 supabase:
   url: ${SUPABASE_URL}
   anon-key: ${SUPABASE_ANON_KEY}
+  jwt-secret: ${SUPABASE_JWT_SECRET}
   service-key: ${SUPABASE_SERVICE_KEY}
   bucket-name: ${SUPABASE_BUCKET_NAME}
 
@@ -17,3 +18,11 @@ cors:
 app:
   room:
     expiry-minutes: 10
+    cleanup-interval-seconds: 500
+
+
+stripe:
+  secret-key: ${STRIPE_SECRET_KEY}
+  webhook-secret: ${STRIPE_WEBHOOK_SECRET}
+  success-url: ${STRIPE_SUCCESS_URL}
+  cancel-url: ${STRIPE_CANCEL_URL}

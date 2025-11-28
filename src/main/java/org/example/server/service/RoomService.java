@@ -53,7 +53,7 @@ public class RoomService {
         rooms.put(roomId, room);
         codeToRoomMap.put(code, roomId);
 
-        String qrData = String.format("https://droply.app/join?code=%s&secret=%s", code.replace("-", ""), secret);
+        String qrData = String.format("https://lazydrop.app/join?code=%s&secret=%s", code.replace("-", ""), secret);
         String qrCodeBase64 = qrCodeService.generateQRCode(qrData, 300, 300);
 
         log.info("Created ephemeral room: {} (code: {}) - expires in {} minutes",
@@ -137,7 +137,9 @@ public class RoomService {
         }
     }
 
-    @Scheduled(fixedRateString = "${app.room.cleanup-interval-seconds}000")
+    @Scheduled(
+            initialDelayString = "PT10S",
+            fixedRateString = "#{${app.room.cleanup-interval-seconds} * 1000}")
     public void cleanUpExpiredRooms(){
         LocalDateTime now = LocalDateTime.now();
         List<String> expiredRoomIds = new ArrayList<>();

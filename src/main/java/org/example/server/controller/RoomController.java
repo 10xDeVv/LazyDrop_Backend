@@ -7,7 +7,6 @@ import org.example.server.dto.CreateRoomResponse;
 import org.example.server.dto.JoinRoomRequest;
 import org.example.server.dto.JoinRoomResponse;
 import org.example.server.models.RoomSession;
-import org.example.server.service.QRCodeService;
 import org.example.server.service.RoomService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
