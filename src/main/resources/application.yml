@@ -1,9 +1,43 @@
+server:
+  servlet:
+    context-path: /api/v1
+
 spring:
   application:
-    name: droply-backend
+    name: lazydrop
 
-server:
-  port: 8080
+  datasource:
+    hikari:
+      maximum-pool-size: 15
+      minimum-idle: 2
+      idle-timeout: 30000
+      max-lifetime: 1800000
+      connection-timeout: 30000
+    url: jdbc:postgresql://localhost:5432/lazydrop
+    username: postgres
+    password: A1t5nuk3
+#    url: ${DB_URL}
+#    username: ${DB_USER}
+#    password: ${DB_PASSWORD}
+
+  web:
+    resources:
+      add-mappings: false
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+  output:
+    ansi:
+      enabled: always
+
+
+
+
+
 
 supabase:
   url: ${SUPABASE_URL}
@@ -12,17 +46,29 @@ supabase:
   service-key: ${SUPABASE_SERVICE_KEY}
   bucket-name: ${SUPABASE_BUCKET_NAME}
 
+#cors:
+#  allowed-origins: ${CORS_ALLOWED_ORIGINS}
+
 cors:
-  allowed-origins: ${CORS_ALLOWED_ORIGINS}
+  allowed-origins: "http://localhost:3000,http://localhost:5173"
+
 
 app:
-  room:
-    expiry-minutes: 10
-    cleanup-interval-seconds: 500
+  frontend-url: ${APP_FRONTEND_URL:http://localhost:3000}
+  join:
+    base:
+      url: https://lazydrop.app/join?code=%s
+  cookies:
+    secure: ${APP_COOKIES_SECURE:false}
 
 
 stripe:
-  secret-key: ${STRIPE_SECRET_KEY}
+  secret-key: ${STRIPE_TEST_SECRET_KEY}
   webhook-secret: ${STRIPE_WEBHOOK_SECRET}
-  success-url: ${STRIPE_SUCCESS_URL}
-  cancel-url: ${STRIPE_CANCEL_URL}
+  prices:
+    pro: ${STRIPE_PRICE_PRO}
+    plus: ${STRIPE_PRICE_PLUS}
+  success-url: ${app.frontend-url}/checkout/success
+  cancel-url: ${app.frontend-url}/checkout/cancel
+  billing-portal: ${app.frontend-url}/account
+
