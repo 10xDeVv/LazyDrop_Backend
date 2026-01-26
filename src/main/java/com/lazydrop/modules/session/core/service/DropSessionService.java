@@ -132,7 +132,6 @@ public class DropSessionService {
                         now
                 );
 
-
         toExpire.forEach(session -> endSession(session, SessionEndReason.EXPIRED));
     }
 
@@ -146,9 +145,9 @@ public class DropSessionService {
     }
 
     @Transactional(readOnly = true)
-    public List<DropSession> getActiveSessions(User owner) {
-        return dropSessionRepository.findByOwnerAndStatusInAndExpiresAtAfter(
-                owner,
+    public List<DropSession> getActiveSessionsForUser(User user) {
+        return dropSessionRepository.findActiveForUser(
+                user,
                 List.of(DropSessionStatus.OPEN, DropSessionStatus.CONNECTED),
                 Instant.now()
         );

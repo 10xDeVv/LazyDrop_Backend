@@ -17,7 +17,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -34,23 +33,30 @@ public class DropSessionController{
                                                                  HttpServletResponse response){
         User owner = identityResolver.resolve(userPrincipal, req, response);
         DropSession resp = dropSessionService.createDropSession(owner);
-        return ResponseEntity.status(HttpStatus.CREATED).body(DropSessionMapper.toDropSessionResponse(resp));
+        return ResponseEntity.status(HttpStatus.CREATED).body(DropSessionMapper.toDropSessionResponse(resp, owner));
     }
 
     @GetMapping("/code/{code}")
-    public ResponseEntity<DropSessionResponse> getByCode(@PathVariable String code){
+    public ResponseEntity<DropSessionResponse> getByCode(@PathVariable String code,  @AuthenticationPrincipal @Nullable UserPrincipal userPrincipal,
+                                                         HttpServletRequest req,
+                                                         HttpServletResponse res){
         DropSession session = dropSessionService.findByCode(code)
                 .orElseThrow(() -> new ResourceNotFoundException("Session not found"));
 
-        return ResponseEntity.ok(DropSessionMapper.toDropSessionResponse(session));
+        User user = identityResolver.resolve(userPrincipal, req, res);
+
+        return ResponseEntity.ok(DropSessionMapper.toDropSessionResponse(session, user));
     }
 
     @GetMapping("/{sessionId}")
-    public ResponseEntity<DropSessionResponse> getBySessionId(@PathVariable UUID sessionId){
+    public ResponseEntity<DropSessionResponse> getBySessionId(@PathVariable UUID sessionId,  @AuthenticationPrincipal @Nullable UserPrincipal userPrincipal,
+                                                              HttpServletRequest req,
+                                                              HttpServletResponse res){
         DropSession session = dropSessionService.findById(sessionId)
                 .orElseThrow(() -> new ResourceNotFoundException("Session not found"));
+        User user = identityResolver.resolve(userPrincipal, req, res);
 
-        return ResponseEntity.ok(DropSessionMapper.toDropSessionResponse(session));
+        return ResponseEntity.ok(DropSessionMapper.toDropSessionResponse(session, user));
     }
 
     @GetMapping("/{sessionId}/qr")
@@ -69,20 +75,29 @@ public class DropSessionController{
     }
 
     @GetMapping("/active")
-    public ResponseEntity<Map<String, List<DropSessionResponse>>> getMyActiveSessions(
+    public ResponseEntity<Map<String, Object>> getMyActiveSessions(
             @AuthenticationPrincipal @Nullable UserPrincipal userPrincipal,
             HttpServletRequest req,
             HttpServletResponse res
     ) {
         User owner = identityResolver.resolve(userPrincipal, req, res);
 
-        var sessions = dropSessionService.getActiveSessions(owner);
+        var sessions = dropSessionService.getActiveSessionsForUser(owner);
 
         var dtos = sessions.stream()
-                .map(DropSessionMapper::toDropSessionResponse)
+                .map(s -> DropSessionMapper.toDropSessionResponse(s, owner))
                 .toList();
 
-        return ResponseEntity.ok(Map.of("sessions", dtos));
+        long ownedActive = sessions.stream().filter(s -> s.getOwner().getId().equals(owner.getId())).count();
+        long joinedActive = sessions.size() - ownedActive;
+
+        return ResponseEntity.ok(Map.of(
+                "sessions", dtos,
+                "counts", Map.of(
+                        "ownedActive", ownedActive,
+                        "joinedActive", joinedActive
+                )
+        ));
     }
 
 }

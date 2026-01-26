@@ -26,9 +26,7 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update
-    properties:
-      hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
+
 
   output:
     ansi:
@@ -70,5 +68,5 @@ stripe:
     plus: ${STRIPE_PRICE_PLUS}
   success-url: ${app.frontend-url}/checkout/success
   cancel-url: ${app.frontend-url}/checkout/cancel
-  billing-portal: ${app.frontend-url}/account
+  billing-portal: ${app.frontend-url}/account?fromPortal=1
 

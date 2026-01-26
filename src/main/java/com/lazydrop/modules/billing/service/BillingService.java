@@ -17,6 +17,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
+
 @Service
 @Slf4j
 @RequiredArgsConstructor
@@ -98,7 +100,7 @@ public class BillingService {
 
         com.stripe.param.billingportal.SessionCreateParams params = com.stripe.param.billingportal.SessionCreateParams.builder()
                 .setCustomer(subscription.getStripeCustomerId())
-                .setReturnUrl(stripeConfig.getSuccessUrl())
+                .setReturnUrl(stripeConfig.getBillingPortalUrl())
                 .build();
 
         com.stripe.model.billingportal.Session session = com.stripe.model.billingportal.Session.create(params);
@@ -121,9 +123,12 @@ public class BillingService {
                 .setCancelAtPeriodEnd(true)
                 .build();
 
-        stripeSubscription.update(params);
+        stripeSubscription = stripeSubscription.update(params);
 
         subscription.setCancelAtPeriodEnd(true);
+        if (stripeSubscription.getItems().getData().getFirst().getCurrentPeriodEnd() != null) {
+            subscription.setCurrentPeriodEnd(Instant.ofEpochSecond(stripeSubscription.getItems().getData().getFirst().getCurrentPeriodEnd()));
+        }
         Subscription updated = subscriptionService.updateSubscription(subscription);
 
         log.info("Scheduled cancellation at period end for user {} (subscription: {})",

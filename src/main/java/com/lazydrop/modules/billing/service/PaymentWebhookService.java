@@ -6,6 +6,7 @@ import com.lazydrop.modules.billing.model.StripeWebhookStatus;
 import com.lazydrop.modules.billing.repository.StripeWebhookEventRepository;
 import com.lazydrop.modules.subscription.model.SubscriptionPlan;
 import com.lazydrop.modules.subscription.model.Subscription;
+import com.lazydrop.modules.subscription.model.SubscriptionStatus;
 import com.lazydrop.modules.subscription.service.SubscriptionService;
 import com.lazydrop.modules.user.model.User;
 import com.lazydrop.modules.user.service.UserService;
@@ -21,6 +22,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import java.time.Duration;
@@ -151,7 +153,10 @@ public class PaymentWebhookService {
 
         try {
             Event event = reconstructEvent(row);
-            tryProcessAndUpdateStatus(eventId, event);
+            txTemplate.execute(status -> {
+                tryProcessAndUpdateStatus(eventId, event);
+                return null;
+            });
         } catch (Exception e) {
             markFailed(eventId, e);
         }
@@ -183,8 +188,7 @@ public class PaymentWebhookService {
         }
     }
 
-
-    private void processEvent(Event event) throws StripeException {
+    protected void processEvent(Event event) throws StripeException {
         switch (event.getType()) {
             case "checkout.session.completed" -> handleCheckoutCompleted(event);
             case "invoice.payment_succeeded" -> handleInvoicePaymentSucceeded(event);
@@ -258,32 +262,73 @@ public class PaymentWebhookService {
         com.stripe.model.Subscription stripeSubscription =
                 (com.stripe.model.Subscription) event.getDataObjectDeserializer().getObject().orElseThrow();
 
-        subscriptionService.findByStripeSubscriptionId(stripeSubscription.getId())
-                .ifPresent(subscription -> {
-                    String priceId = stripeSubscription.getItems().getData().getFirst().getPrice().getId();
-                    SubscriptionPlan newPlan = determinePlanFromPriceId(priceId);
+        Instant periodEnd = Instant.ofEpochSecond(stripeSubscription.getItems().getData().getFirst().getCurrentPeriodEnd());
+        boolean canceling = isScheduledToCancel(stripeSubscription);
 
-                    Instant newPeriodEnd = Instant.ofEpochSecond(
-                            stripeSubscription.getItems().getData().getFirst().getCurrentPeriodEnd()
-                    );
+        String priceId = stripeSubscription.getItems().getData().getFirst().getPrice().getId();
+        SubscriptionPlan newPlan = determinePlanFromPriceId(priceId);
 
-                    boolean cancelAtPeriodEnd = stripeSubscription.getCancelAtPeriodEnd();
+        SubscriptionStatus mappedStatus = mapStripeStatus(stripeSubscription);
 
-                    subscriptionService.updateSubscription(
-                            subscription.getUser(),
-                            newPlan,
-                            newPeriodEnd,
-                            cancelAtPeriodEnd
-                    );
-                });
+        String stripeSubId = stripeSubscription.getId();
+        String stripeCustomerId = stripeSubscription.getCustomer();
+
+        Subscription sub = subscriptionService.findByStripeSubscriptionId(stripeSubId)
+                .orElseGet(() -> subscriptionService.findByStripeCustomerId(stripeCustomerId)
+                        .orElseThrow(() -> new IllegalStateException(
+                                "No subscription row found for stripeSubId=" + stripeSubId +
+                                        " stripeCustomerId=" + stripeCustomerId)));
+
+        if (sub.getStripeSubscriptionId() == null) {
+            sub.setStripeSubscriptionId(stripeSubId);
+        }
+
+        sub.setPlanCode(newPlan);
+        sub.setStatus(mappedStatus);
+        sub.setCurrentPeriodEnd(periodEnd);
+        sub.setCancelAtPeriodEnd(canceling);
+
+        log.info("SUB_UPDATED stripeSubId={} status={} cancelAtPeriodEnd={} cancelAt={} currentPeriodEnd={}",
+                stripeSubId,
+                stripeSubscription.getStatus(),
+                stripeSubscription.getCancelAtPeriodEnd(),
+                stripeSubscription.getCancelAt(),
+                stripeSubscription.getItems().getData().getFirst().getCurrentPeriodEnd()
+        );
+
+
+        subscriptionService.updateSubscription(sub);
     }
 
     private void handleSubscriptionDeleted(Event event) {
         com.stripe.model.Subscription stripeSubscription =
                 (com.stripe.model.Subscription) event.getDataObjectDeserializer().getObject().orElseThrow();
 
-        subscriptionService.findByStripeSubscriptionId(stripeSubscription.getId())
-                .ifPresent(subscription -> subscriptionService.cancelSubscription(subscription.getUser()));
+        Instant stripePeriodEnd = Instant.ofEpochSecond(stripeSubscription.getItems().getData().getFirst().getCurrentPeriodEnd());
+
+        String stripeSubId = stripeSubscription.getId();
+        String stripeCustomerId = stripeSubscription.getCustomer();
+
+        Subscription sub = subscriptionService.findByStripeSubscriptionId(stripeSubId)
+                .orElseGet(() -> subscriptionService.findByStripeCustomerId(stripeCustomerId)
+                        .orElseThrow(() -> new IllegalStateException(
+                                "No subscription found for stripeSubId=" + stripeSubId +
+                                        " stripeCustomerId=" + stripeCustomerId)));
+
+        if (sub.getStripeSubscriptionId() == null || !sub.getStripeSubscriptionId().equals(stripeSubId)) {
+            sub.setStripeSubscriptionId(stripeSubId);
+        }
+
+        sub.setStatus(SubscriptionStatus.CANCELED);
+        sub.setCancelAtPeriodEnd(false);
+        sub.setCurrentPeriodEnd(stripePeriodEnd);
+
+        // Product rule: keep paid plan until period end; scheduler flips to FREE later
+        if (!stripePeriodEnd.isAfter(Instant.now())) {
+            sub.setPlanCode(SubscriptionPlan.FREE);
+        }
+
+        subscriptionService.updateSubscription(sub);
     }
 
     private SubscriptionPlan determinePlanFromPriceId(String priceId) {
@@ -294,7 +339,6 @@ public class PaymentWebhookService {
     }
 
     // ---------------- status updates ----------------
-
     protected void markProcessed(String eventId) {
         txTemplate.executeWithoutResult(status -> {
             StripeWebhookEvent latest = eventRepo.findByStripeEventId(eventId).orElseThrow();
@@ -367,4 +411,25 @@ public class PaymentWebhookService {
     private static class UnhandledStripeEventException extends RuntimeException {
         public UnhandledStripeEventException(String msg) { super(msg); }
     }
+
+    private SubscriptionStatus mapStripeStatus(com.stripe.model.Subscription stripeSub) {
+        String s = stripeSub.getStatus(); // Stripe gives string statuses
+        if (s == null) return SubscriptionStatus.ACTIVE;
+
+        return switch (s) {
+            case "active", "trialing" -> SubscriptionStatus.ACTIVE;
+            case "past_due", "unpaid" -> SubscriptionStatus.PAST_DUE;
+            case "canceled" -> SubscriptionStatus.CANCELED;
+            default -> SubscriptionStatus.ACTIVE; // keep sane default
+        };
+    }
+
+    private boolean isScheduledToCancel(com.stripe.model.Subscription s) {
+        if (Boolean.TRUE.equals(s.getCancelAtPeriodEnd())) return true;
+
+        Long cancelAt = s.getCancelAt();
+        return cancelAt != null && cancelAt > Instant.now().getEpochSecond();
+    }
+
+
 }

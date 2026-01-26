@@ -41,7 +41,6 @@ public class SubscriptionService {
                     .build();
             return subscriptionRepository.save(sub);
         } catch (DataIntegrityViolationException e) {
-            // someone else created it milliseconds earlier
             return subscriptionRepository.findByUser(user)
                     .orElseThrow(() -> e);
         }
@@ -58,10 +57,6 @@ public class SubscriptionService {
                 .orElseGet(() -> createFreeSubscriptionIdempotent(user));
 
         return planLimitsResolver.getLimitsForPlan(subscription.getPlanCode());
-    }
-
-    public Subscription updateSubscription(Subscription subscription){
-        return subscriptionRepository.save(subscription);
     }
 
     @Transactional
@@ -91,27 +86,15 @@ public class SubscriptionService {
         subscriptionRepository.save(subscription);
     }
 
-    @Transactional
-    public void cancelSubscription(User user) {
-        Subscription subscription = getOrCreateSubscription(user);
-        subscription.setStatus(SubscriptionStatus.CANCELED);
-        subscription.setPlanCode(SubscriptionPlan.FREE);
-        subscription.setCancelAtPeriodEnd(false);
-        subscriptionRepository.save(subscription);
-    }
-
-    @Transactional
-    public void updateSubscription(User user, SubscriptionPlan newPlan,
-                                   Instant periodEnd, boolean cancelAtPeriodEnd) {
-        Subscription subscription = getOrCreateSubscription(user);
-        subscription.setPlanCode(newPlan);
-        subscription.setCurrentPeriodEnd(periodEnd);
-        subscription.setCancelAtPeriodEnd(cancelAtPeriodEnd);
-        subscriptionRepository.save(subscription);
+    public Subscription updateSubscription(Subscription subscription){
+        return subscriptionRepository.save(subscription);
     }
 
     public Optional<Subscription> findByStripeSubscriptionId(String stripeSubscriptionId) {
         return subscriptionRepository.findByStripeSubscriptionId(stripeSubscriptionId);
     }
 
+    public Optional<Subscription> findByStripeCustomerId(String stripeCustomerId) {
+        return subscriptionRepository.findByStripeCustomerId(stripeCustomerId);
+    }
 }

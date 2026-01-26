@@ -28,6 +28,9 @@ public class StripeConfig {
     @Value("${stripe.cancel-url}")
     private String cancelUrl;
 
+    @Value("${stripe.billing-portal}")
+    private String billingPortalUrl;
+
     @PostConstruct
     public void init() {
         Stripe.apiKey = stripeSecretKey;

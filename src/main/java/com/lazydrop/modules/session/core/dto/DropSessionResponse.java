@@ -14,5 +14,6 @@ public record DropSessionResponse(
         Instant expiresAt,
         long remainingSeconds,
         String ownerId,
-        String qrCodeData
+        String qrCodeData,
+        String myRole
 ) {}

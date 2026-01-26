@@ -21,7 +21,7 @@ public class PlanLimitsResolver {
             );
             case FREE -> new PlanLimits(
                     SubscriptionPlan.FREE, 
-                    2, 
+                    3,
                     15, 
                     5, 
                     100L * 1024 * 1024,
