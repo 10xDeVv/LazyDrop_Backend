@@ -13,9 +13,9 @@ spring:
       idle-timeout: 30000
       max-lifetime: 1800000
       connection-timeout: 30000
-    url: ${DB_URL}
-    username: ${DB_USER}
-    password: ${DB_PASSWORD}
+    url: ${DATABASE_URL}
+    username: ${DATABASE_USERNAME:${DB_USER:}}
+    password: ${DATABASE_PASSWORD:${DB_PASSWORD:}}
 
   web:
     resources:
