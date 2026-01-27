@@ -22,11 +22,12 @@ spring:
       add-mappings: false
   jpa:
     hibernate:
-      ddl-auto: validate
+      ddl-auto: none
     defer-datasource-initialization: true
   flyway:
     enabled: true
     locations: classpath:db/migration
+    baseline-on-migrate: true
 
   output:
     ansi:
@@ -59,4 +60,10 @@ stripe:
   success-url: ${app.frontend-url}/checkout/success
   cancel-url: ${app.frontend-url}/checkout/cancel
   billing-portal: ${app.frontend-url}/account?fromPortal=1
+
+logging:
+  level:
+    org.flywaydb: DEBUG
+    org.springframework.boot.autoconfigure.flyway: DEBUG
+
 
