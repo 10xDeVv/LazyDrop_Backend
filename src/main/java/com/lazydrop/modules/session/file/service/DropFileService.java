@@ -73,7 +73,7 @@ public class DropFileService {
 
         session.assertUsable();
 
-        requireParticipant(session, uploader);
+        DropSessionParticipant participant = requireParticipant(session, uploader);
 
         planEnforcementService.checkFileUploadLimits(session, request.getSizeBytes());
 
@@ -93,6 +93,7 @@ public class DropFileService {
                 file.getOriginalName(),
                 file.getSizeBytes(),
                 file.getUploader().getId().toString(),
+                participant.getId().toString(),
                 file.getCreatedAt()
         );
 

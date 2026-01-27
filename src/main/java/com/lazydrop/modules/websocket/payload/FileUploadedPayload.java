@@ -7,5 +7,6 @@ public record FileUploadedPayload(
         String originalName,
         long sizeBytes,
         String uploaderUserId,
+        String uploaderParticipantId,
         Instant createdAt
 ) {}
