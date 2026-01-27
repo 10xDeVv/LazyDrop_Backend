@@ -45,6 +45,7 @@ public class SecurityConfig {
                         .requestMatchers("/ws/**").permitAll()
                         .requestMatchers("/sessions/**").permitAll()
                         .requestMatchers("/webhooks/**").permitAll()
+                        .requestMatchers("/health").permitAll()
                         .requestMatchers("/subscriptions/**").authenticated()
                         .requestMatchers("/users/me").authenticated()
                         .anyRequest().authenticated()
