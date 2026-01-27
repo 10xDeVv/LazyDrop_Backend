@@ -11,11 +11,11 @@ public class PlanLimitsResolver {
         return switch (plan) {
             case GUEST -> new PlanLimits(
                     SubscriptionPlan.GUEST,
-                    1,
+                    2,
                     10,
                     3,
                     25L * 1024 * 1024,
-                    2,
+                    4,
                     0,
                     0
             );
