@@ -1,7 +1,7 @@
 package com.lazydrop.modules.session.participant.model;
 
 import com.lazydrop.modules.session.core.model.DropSession;
-import com.lazydrop.modules.session.core.model.ParticipantRole;
+import com.lazydrop.modules.session.participant.dto.ParticipantRole;
 import com.lazydrop.modules.user.model.User;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;

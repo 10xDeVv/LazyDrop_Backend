@@ -2,15 +2,13 @@ package com.lazydrop.modules.session.participant.service;
 
 import com.lazydrop.common.exception.ResourceNotFoundException;
 import com.lazydrop.modules.billing.service.PlanEnforcementService;
-import com.lazydrop.modules.session.core.dto.ParticipantSettingsRequest;
-import com.lazydrop.modules.session.core.dto.ParticipantSettingsResponse;
+import com.lazydrop.modules.session.participant.dto.ParticipantSettingsRequest;
+import com.lazydrop.modules.session.participant.dto.ParticipantSettingsResponse;
 import com.lazydrop.modules.session.core.model.DropSession;
-import com.lazydrop.modules.session.core.model.ParticipantRole;
+import com.lazydrop.modules.session.participant.dto.ParticipantRole;
 import com.lazydrop.modules.session.note.repository.DropSessionNoteRepository;
-import com.lazydrop.modules.session.note.service.DropSessionNoteService;
 import com.lazydrop.modules.session.participant.model.DropSessionParticipant;
 import com.lazydrop.modules.websocket.MessageType;
-import com.lazydrop.modules.subscription.service.SubscriptionService;
 import com.lazydrop.modules.session.participant.repository.DropSessionParticipantRepository;
 import com.lazydrop.modules.user.model.User;
 import com.lazydrop.modules.websocket.WebSocketNotifier;

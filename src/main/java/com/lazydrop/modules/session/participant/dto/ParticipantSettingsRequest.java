@@ -1,4 +1,4 @@
-package com.lazydrop.modules.session.core.dto;
+package com.lazydrop.modules.session.participant.dto;
 
 import jakarta.validation.constraints.NotNull;
 

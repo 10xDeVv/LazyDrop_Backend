@@ -1,6 +1,5 @@
 package com.lazydrop.modules.user.service;
 
-import com.lazydrop.config.AppConfig;
 import com.lazydrop.modules.user.model.User;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
@@ -16,7 +15,6 @@ public class GuestService {
     private static final String GUEST_COOKIE_NAME = "ld_guest_id";
 
     private final UserService userService;
-    private final AppConfig appConfig;
 
     public User resolveOrCreateGuest(HttpServletRequest request,
                                      HttpServletResponse response) {
