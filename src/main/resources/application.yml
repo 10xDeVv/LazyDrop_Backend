@@ -60,3 +60,9 @@ stripe:
   cancel-url: ${app.frontend-url}/checkout/cancel
   billing-portal: ${app.frontend-url}/account?fromPortal=1
 
+logging:
+  level:
+    org.flywaydb: DEBUG
+    org.springframework.boot.autoconfigure.flyway: DEBUG
+
+
