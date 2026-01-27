@@ -17,6 +17,17 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Value("${cors.allowed-origins}")
     private String allowedOrigins;
 
+    private final ThreadPoolTaskScheduler heartBeatScheduler;
+
+    public WebSocketConfig() {
+        ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
+        scheduler.setPoolSize(1);
+        scheduler.setThreadNamePrefix("heart-beat-scheduler-");
+        scheduler.setWaitForTasksToCompleteOnShutdown(true);
+        scheduler.initialize();
+        this.heartBeatScheduler = scheduler;
+    }
+
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/ws")
@@ -25,21 +36,12 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                 .setHeartbeatTime(25000);
     }
 
-
     @Override
     public void configureMessageBroker(MessageBrokerRegistry registry) {
         registry.enableSimpleBroker("/topic", "/queue")
                 .setHeartbeatValue(new long[]{25000, 25000})
-                .setTaskScheduler(heartBeatScheduler());
-        registry.setApplicationDestinationPrefixes("/app");
-    }
+                .setTaskScheduler(heartBeatScheduler);
 
-    @Bean
-    public TaskScheduler heartBeatScheduler(){
-        ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
-        scheduler.setPoolSize(1);
-        scheduler.setThreadNamePrefix("heart-beat-scheduler");
-        scheduler.setWaitForTasksToCompleteOnShutdown(true);
-        return scheduler;
+        registry.setApplicationDestinationPrefixes("/app");
     }
 }
