@@ -13,7 +13,7 @@ public class AppSchedulingConfig {
     @Bean(name = "taskScheduler")
     public TaskScheduler taskScheduler() {
         ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
-        scheduler.setPoolSize(2); // adjust if you have more scheduled jobs
+        scheduler.setPoolSize(2);
         scheduler.setThreadNamePrefix("app-scheduler-");
         scheduler.setWaitForTasksToCompleteOnShutdown(true);
         scheduler.initialize();

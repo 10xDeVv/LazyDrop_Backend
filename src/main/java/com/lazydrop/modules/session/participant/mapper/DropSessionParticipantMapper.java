@@ -10,13 +10,11 @@ public class DropSessionParticipantMapper {
 
         String name;
         if (u.isGuest()) {
-            // show something stable-ish but not personal
             String tail = (u.getGuestId() != null && u.getGuestId().length() >= 4)
                     ? u.getGuestId().substring(u.getGuestId().length() - 4).toUpperCase()
                     : "GUEST";
             name = "Guest " + tail;
         } else {
-            // email prefix or whatever you want
             String email = u.getEmail();
             name = (email != null && email.contains("@")) ? email.substring(0, email.indexOf("@")) : "Member";
         }
