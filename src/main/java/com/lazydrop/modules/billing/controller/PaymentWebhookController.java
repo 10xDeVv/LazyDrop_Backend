@@ -44,13 +44,10 @@ public class PaymentWebhookController {
 
         try {
             paymentWebhookService.receiveAndStore(event, payload, sigHeader);
-            // ✅ ACK once stored (Stripe cares about receipt, not that we finished processing)
             return ResponseEntity.ok("ok");
         } catch (Exception e) {
-            // If this fails, it usually means DB save failed (bad — let Stripe retry)
             log.error("Stripe webhook failed BEFORE ACK (could not persist): eventId={} type={} err={}",
                     event.getId(), event.getType(), e.getMessage(), e);
-            // 500 => Stripe will retry, which is what we want if we couldn't save it.
             return ResponseEntity.internalServerError().body("failed");
         }
 

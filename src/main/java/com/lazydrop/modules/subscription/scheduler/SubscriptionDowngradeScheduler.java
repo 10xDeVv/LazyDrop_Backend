@@ -20,7 +20,6 @@ public class SubscriptionDowngradeScheduler {
 
     private final SubscriptionRepository subscriptionRepository;
 
-    // every 10 minutes (you can change to 5–15 mins)
     @Scheduled(fixedDelay = 10 * 60 * 1000)
     @Transactional
     public void downgradeExpiredCanceledSubscriptions() {
@@ -37,7 +36,6 @@ public class SubscriptionDowngradeScheduler {
 
         for (Subscription sub : subs) {
             sub.setPlanCode(SubscriptionPlan.FREE);
-            // status can stay CANCELED; or you could set something like EXPIRED if you had it
         }
 
         subscriptionRepository.saveAll(subs);
