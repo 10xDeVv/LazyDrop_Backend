@@ -22,17 +22,12 @@ public interface StripeWebhookEventRepository extends JpaRepository<StripeWebhoo
             Pageable pageable
     );
 
-    // For lease-expired PROCESSING recovery
     List<StripeWebhookEvent> findByStatusAndNextRetryAtLessThanEqualOrderByReceivedAtAsc(
             StripeWebhookStatus status,
             Instant now,
             Pageable pageable
     );
 
-    /**
-     * ✅ Atomic claim. Only ONE node wins this update.
-     * Also sets nextRetryAt = leaseUntil to act as a PROCESSING lease expiry.
-     */
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("""
         update StripeWebhookEvent e
