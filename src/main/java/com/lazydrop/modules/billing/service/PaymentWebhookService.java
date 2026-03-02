@@ -137,7 +137,7 @@ public class PaymentWebhookService {
         String eventId = row.getStripeEventId();
 
         Instant leaseUntil = Instant.now().plus(PROCESSING_LEASE);
-        boolean claimed = txTemplate.execute(status -> {
+        Boolean claimed = txTemplate.execute(status -> {
             int updated = eventRepo.claimWithLease(
                     eventId,
                     StripeWebhookStatus.PROCESSING,
@@ -147,7 +147,7 @@ public class PaymentWebhookService {
             return updated == 1;
         });
 
-        if (!claimed) return;
+        if (claimed == null || !claimed) return;
 
         try {
             Event event = reconstructEvent(row);
