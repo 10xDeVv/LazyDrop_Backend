@@ -17,7 +17,7 @@ public class DropSessionScheduler {
     private final DropSessionService dropSessionService;
     private final DropSessionParticipantService participantService;
 
-    @Scheduled(fixedRate = 60_000)
+    @Scheduled(fixedRate = 60_000, initialDelay = 30_000)
     public void expireSessions() {
         log.debug("Tick: expireSessions");
         int expired = dropSessionService.cleanUpExpiredSessions();
@@ -26,7 +26,7 @@ public class DropSessionScheduler {
         }
     }
 
-    @Scheduled(fixedRate = 300_000)
+    @Scheduled(fixedRate = 300_000, initialDelay = 30_000)
     public void cleanupDisconnectedParticipants() {
         log.debug("Tick: cleanupDisconnectedParticipants");
         Duration maxDisconnect = Duration.ofMinutes(5);

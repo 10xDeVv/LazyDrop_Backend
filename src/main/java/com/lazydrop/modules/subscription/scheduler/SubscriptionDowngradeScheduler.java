@@ -20,7 +20,7 @@ public class SubscriptionDowngradeScheduler {
 
     private final SubscriptionRepository subscriptionRepository;
 
-    @Scheduled(fixedDelay = 10 * 60 * 1000)
+    @Scheduled(fixedDelay = 10 * 60 * 1000, initialDelay = 30_000)
     @Transactional
     public void downgradeExpiredCanceledSubscriptions() {
         log.debug("Tick: downgradeExpiredCanceledSubscriptions");
