@@ -13,7 +13,14 @@ WORKDIR /app
 
 COPY --from=build /app/target/*.jar app.jar
 
-ENV JAVA_TOOL_OPTIONS="-XX:MaxRAMPercentage=75.0 -Duser.timezone=UTC"
+ENV JAVA_TOOL_OPTIONS="\
+  -XX:MaxRAMPercentage=50.0 \
+  -XX:+UseSerialGC \
+  -XX:MaxMetaspaceSize=128m \
+  -XX:+TieredCompilation \
+  -XX:TieredStopAtLevel=1 \
+  -Xss256k \
+  -Duser.timezone=UTC"
 EXPOSE 8080
 
 

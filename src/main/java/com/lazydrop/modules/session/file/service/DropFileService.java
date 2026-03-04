@@ -31,7 +31,8 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.io.IOException;
+
+import java.io.InputStream;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -51,7 +52,7 @@ public class DropFileService {
     private final PlanEnforcementService planEnforcementService;
 
     @Transactional(readOnly = true)
-    public SignedUploadResponse requestUploadUrl(UUID sessionId, User uploader, String fileName, String contentType, long contentLength, int expiresInSec) throws IOException {
+    public SignedUploadResponse requestUploadUrl(UUID sessionId, User uploader, String fileName, String contentType, long contentLength, int expiresInSec) {
         DropSession session = dropSessionService.findById(sessionId)
                 .orElseThrow(() -> new ResourceNotFoundException("DropSession not found"));
 
@@ -83,6 +84,49 @@ public class DropFileService {
                 .storagePath(request.getObjectPath())
                 .originalName(request.getOriginalName())
                 .sizeBytes(request.getSizeBytes())
+                .createdAt(Instant.now())
+                .build();
+
+        file = dropFileRepository.save(file);
+
+        FileUploadedPayload payload = new FileUploadedPayload(
+                file.getId().toString(),
+                file.getOriginalName(),
+                file.getSizeBytes(),
+                file.getUploader().getId().toString(),
+                participant.getId().toString(),
+                file.getCreatedAt()
+        );
+
+        webSocketNotifier.sendEventAfterCommit(sessionId.toString(), MessageType.FILE_UPLOADED, payload);
+
+        return file;
+    }
+
+    /**
+     * Upload file through the backend (proxied to Spaces) and confirm in one step.
+     * Avoids CORS issues with direct browser → Spaces uploads.
+     */
+    @Transactional
+    public DropFile directUpload(UUID sessionId, User uploader, String fileName, String contentType, long fileSize, InputStream data) {
+        DropSession session = dropSessionService.findById(sessionId)
+                .orElseThrow(() -> new ResourceNotFoundException("DropSession not found"));
+
+        session.assertUsable();
+
+        DropSessionParticipant participant = requireParticipant(session, uploader);
+
+        planEnforcementService.checkFileUploadLimits(session, fileSize);
+
+        // Upload to Spaces server-side (no CORS needed)
+        String objectPath = storageService.uploadFile(sessionId.toString(), fileName, contentType, fileSize, data);
+
+        DropFile file = DropFile.builder()
+                .dropSession(session)
+                .uploader(uploader)
+                .storagePath(objectPath)
+                .originalName(fileName)
+                .sizeBytes(fileSize)
                 .createdAt(Instant.now())
                 .build();
 

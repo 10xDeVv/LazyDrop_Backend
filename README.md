@@ -99,8 +99,11 @@ Create a `.env` file or configure environment variables:
 | SUPABASE_URL                | Supabase project URL                |
 | SUPABASE_ANON_KEY           | Supabase public key                 |
 | SUPABASE_JWT_SECRET         | JWT secret for validation           |
-| SUPABASE_SERVICE_KEY        | Service role key                    |
-| SUPABASE_BUCKET_NAME        | Storage bucket name                 |
+| SPACES_ENDPOINT             | DO Spaces endpoint (e.g. https://nyc3.digitaloceanspaces.com) |
+| SPACES_REGION               | DO Spaces region (e.g. nyc3)        |
+| SPACES_BUCKET               | DO Spaces bucket name               |
+| SPACES_ACCESS_KEY           | DO Spaces access key                |
+| SPACES_SECRET_KEY           | DO Spaces secret key                |
 | CORS_ALLOWED_ORIGINS        | Allowed origins                     |
 | APP_FRONTEND_URL            | Frontend URL                        |
 | STRIPE_TEST_SECRET_KEY      | Stripe secret key                   |

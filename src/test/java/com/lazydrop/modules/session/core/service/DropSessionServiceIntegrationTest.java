@@ -52,8 +52,11 @@ class DropSessionServiceIntegrationTest {
         registry.add("supabase.url", () -> "https://test.supabase.co");
         registry.add("supabase.anon-key", () -> "test_anon_key");
         registry.add("supabase.jwt-secret", () -> "test_jwt_secret");
-        registry.add("supabase.service-key", () -> "test_service_key");
-        registry.add("supabase.bucket-name", () -> "test_bucket");
+        registry.add("spaces.endpoint", () -> "https://nyc3.digitaloceanspaces.com");
+        registry.add("spaces.region", () -> "nyc3");
+        registry.add("spaces.bucket-name", () -> "test-bucket");
+        registry.add("spaces.access-key", () -> "test_access_key");
+        registry.add("spaces.secret-key", () -> "test_secret_key");
         registry.add("cors.allowed-origins", () -> "http://localhost:3000");
         registry.add("app.frontend-url", () -> "http://localhost:3000");
     }

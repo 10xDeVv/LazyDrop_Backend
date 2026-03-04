@@ -1,11 +1,13 @@
 spring:
   application:
     name: lazydrop
+  main:
+    lazy-initialization: true
 
   datasource:
     hikari:
-      maximum-pool-size: 15
-      minimum-idle: 2
+      maximum-pool-size: 5
+      minimum-idle: 1
       idle-timeout: 30000
       max-lifetime: 1800000
       connection-timeout: 30000
@@ -27,12 +29,21 @@ spring:
   output:
     ansi:
       enabled: always
+  servlet:
+    multipart:
+      max-file-size: 2048MB
+      max-request-size: 2048MB
 supabase:
   url: ${SUPABASE_URL}
   anon-key: ${SUPABASE_ANON_KEY}
   jwt-secret: ${SUPABASE_JWT_SECRET}
-  service-key: ${SUPABASE_SERVICE_KEY}
-  bucket-name: ${SUPABASE_BUCKET_NAME}
+
+spaces:
+  endpoint: ${SPACES_ENDPOINT}
+  region: ${SPACES_REGION}
+  bucket-name: ${SPACES_BUCKET}
+  access-key: ${SPACES_ACCESS_KEY}
+  secret-key: ${SPACES_SECRET_KEY}
 
 cors:
   allowed-origins: ${CORS_ALLOWED_ORIGINS}
@@ -55,8 +66,3 @@ stripe:
   success-url: ${app.frontend-url}/checkout/success
   cancel-url: ${app.frontend-url}/checkout/cancel
   billing-portal: ${app.frontend-url}/account?fromPortal=1
-
-logging:
-  level:
-    org.flywaydb: DEBUG
-    org.springframework.boot.autoconfigure.flyway: DEBUG

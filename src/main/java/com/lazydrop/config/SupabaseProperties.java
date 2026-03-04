@@ -13,8 +13,4 @@ import org.springframework.context.annotation.Configuration;
 public class SupabaseProperties {
 
     private String url;
-
-    private String serviceKey;
-
-    private String bucketName;
 }

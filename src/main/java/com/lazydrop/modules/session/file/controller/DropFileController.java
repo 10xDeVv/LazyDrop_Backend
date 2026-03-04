@@ -12,11 +12,12 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
 
@@ -36,10 +37,31 @@ public class DropFileController{
             @Valid @RequestBody FileUploadRequest request,
             HttpServletRequest req,
             HttpServletResponse response
-            ) throws IOException {
+            ) {
         User uploader = identityResolver.resolve(userPrincipal, req, response);
         SignedUploadResponse resp = dropFileService.requestUploadUrl(sessionId, uploader, request.getFileName(), request.getContentType(), request.getFileSize(),  300);
         return ResponseEntity.ok(resp);
+    }
+
+    /** Proxied upload: browser → backend → Spaces (avoids CORS on the bucket). */
+    @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<DropFileDto> uploadFile(
+            @PathVariable UUID sessionId,
+            @AuthenticationPrincipal UserPrincipal userPrincipal,
+            @RequestParam("file") MultipartFile file,
+            HttpServletRequest req,
+            HttpServletResponse response
+    ) throws java.io.IOException {
+        User uploader = identityResolver.resolve(userPrincipal, req, response);
+        var saved = dropFileService.directUpload(
+                sessionId,
+                uploader,
+                file.getOriginalFilename(),
+                file.getContentType(),
+                file.getSize(),
+                file.getInputStream()
+        );
+        return ResponseEntity.status(HttpStatus.CREATED).body(DropFileMapper.toDropFileDto(saved));
     }
 
     @PostMapping("/confirm")
